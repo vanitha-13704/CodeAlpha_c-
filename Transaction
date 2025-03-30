@@ -1,0 +1,137 @@
+#include <iostream>
+#include <vector>
+#include <string>
+
+using namespace std;
+
+// Class to represent a transaction
+class Transaction {
+public:
+    string type; // "Deposit", "Withdrawal", or "Transfer"
+    double amount;
+    string date;
+
+    Transaction(string t, double a, string d) : type(t), amount(a), date(d) {}
+};
+
+// Class to represent a bank account
+class Account {
+private:
+    string accountNumber;
+    double balance;
+    vector<Transaction> transactions;
+
+public:
+    Account(string accNum) : accountNumber(accNum), balance(0.0) {}
+
+    void deposit(double amount) {
+        balance += amount;
+        transactions.push_back(Transaction("Deposit", amount, "2023-10-01")); // Example date
+    }
+
+    bool withdraw(double amount) {
+        if (amount > balance) {
+            cout << "Insufficient funds!" << endl;
+            return false;
+        }
+        balance -= amount;
+        transactions.push_back(Transaction("Withdrawal", amount, "2023-10-01")); // Example date
+        return true;
+    }
+
+    void transfer(Account& toAccount, double amount) {
+        if (withdraw(amount)) {
+            toAccount.deposit(amount);
+            transactions.push_back(Transaction("Transfer", amount, "2023-10-01")); // Example date
+        }
+    }
+
+    void printAccountInfo() const {
+        cout << "Account Number: " << accountNumber << endl;
+        cout << "Balance: $" << balance << endl;
+        cout << "Recent Transactions:" << endl;
+        for (const auto& transaction : transactions) {
+            cout << transaction.date << " - " << transaction.type << ": $" << transaction.amount << endl;
+        }
+    }
+};
+
+// Class to represent a customer
+class Customer {
+private:
+    string name;
+    string id;
+    Account account;
+
+public:
+    Customer(string n, string i, string accNum) : name(n), id(i), account(accNum) {}
+
+    string getId() const { // Getter for id
+        return id;
+    }
+
+    void deposit(double amount) {
+        account.deposit(amount);
+    }
+
+    void withdraw(double amount) {
+        account.withdraw(amount);
+    }
+
+    void transfer(Customer& toCustomer, double amount) {
+        account.transfer(toCustomer.account, amount);
+    }
+
+    void viewAccountInfo() const {
+        cout << "Customer Name: " << name << endl;
+        cout << "Customer ID: " << id << endl;
+        account.printAccountInfo();
+    }
+};
+
+// Class to represent the banking system
+class BankingSystem {
+private:
+    vector<Customer> customers;
+
+public:
+    void addCustomer(const string& name, const string& id, const string& accNum) {
+        customers.emplace_back(name, id, accNum);
+    }
+
+    Customer* findCustomer(const string& id) {
+        for (auto& customer : customers) {
+            if (customer.getId() == id) { // Use the getter to access id
+                return &customer;
+            }
+        }
+        return nullptr;
+    }
+};
+
+int main() {
+    BankingSystem bank;
+
+    // Adding customers
+    bank.addCustomer("Alice", "C001", "ACC001");
+    bank.addCustomer("Bob", "C002", "ACC002");
+
+    // Example operations
+    Customer* alice = bank.findCustomer("C001");
+    if (alice) {
+        alice->deposit(500);
+        alice->withdraw(200);
+        alice->viewAccountInfo();
+    }
+
+    cout << endl;
+
+    Customer* bob = bank.findCustomer("C002");
+    if (bob) {
+        bob->deposit(1000);
+        bob->transfer(*alice, 300);
+        bob->viewAccountInfo();
+    }
+
+    return 0;
+}
